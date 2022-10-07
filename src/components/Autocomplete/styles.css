@@ -1,0 +1,72 @@
+.autocomplete-container {
+  position: relative;
+}
+
+.autocomplete-container input {
+  padding: 12px 36px 12px 12px;
+  border-radius: 4px;
+  min-width: 240px;
+  font-size: 18px;
+}
+
+.list-options {
+  position: absolute;
+  width: 100%;
+  list-style: none;
+  border-top: 0px;
+  max-height: 300px;
+  overflow: scroll;
+  border: 1px solid #dedede;
+  border-top: 0px;
+  background: white;
+}
+
+.list-options li {
+  border-bottom: 1px solid #dedede;
+}
+.list-options li:last-child {
+  border-bottom: 0px;
+}
+
+.list-options li button {
+  padding: 12px 4px 12px 12px;
+  width: 100%;
+  text-align: left;
+  height: 100%;
+  cursor: pointer;
+  font-size: 16px;
+  background: transparent;
+  border: none;
+  color: #16085b;
+}
+
+.list-options li button:hover {
+  background: #dedede;
+}
+
+.empty-list {
+  padding: 12px;
+  color: #16085b;
+}
+
+.loading-state {
+  padding: 12px;
+  color: #16085b;
+}
+
+button.clear-btn {
+  background: transparent;
+  color: #16085b;
+  border: none;
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 20px;
+  opacity: 0.4;
+  cursor: pointer;
+}
+
+b {
+  color: #0000FF;
+}

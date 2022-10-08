@@ -9,7 +9,6 @@ const STATUS = {
 }
 
 type AutocompleteSearchProps = {
-  keyValue?: string;
   callData: (term: string) => Promise<string[]>,
   debounceMs?: number
   onGetSelectedValue: (selectedOption: string) => void,

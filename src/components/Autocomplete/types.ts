@@ -1,12 +1,12 @@
 import { Item } from "types"
 
 export type AutocompleteSearchProps = {
-  callData: (term: string) => Promise<Item[]>,
   debounceMs?: number
-  onGetSelectedValue: (selectedOption: string) => void,
   placeholder?: string,
   loadingMsg?: string,
-  emptyMsg?: string
+  emptyMsg?: string,
+  callData: (term: string) => Promise<Item[]>,
+  onGetSelectedValue: (selectedOption: string) => void,
 }
 
 export type ListProps = {

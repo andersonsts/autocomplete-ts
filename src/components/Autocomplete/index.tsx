@@ -8,17 +8,22 @@ import { AutocompleteSearchProps, ListProps, Message, NameProps } from './types'
 import './styles.css'
 
 export default function Autocomplete({ 
-  callData,
   debounceMs = 500,
-  onGetSelectedValue,
   placeholder = MESSAGES.placeholder,
   loadingMsg = MESSAGES.loadingMsg,
-  emptyMsg = MESSAGES.emptyMsg
+  emptyMsg = MESSAGES.emptyMsg,
+  callData,
+  onGetSelectedValue,
 }: AutocompleteSearchProps) {
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>()
   const [term, setTerm] = useState<string>('') 
   const [data, setData] = useState<Item[]>([])
   const [status, setStatus] = useState<string>(STATUS.idle)
+
+  const showEmptyState = status === STATUS.empty 
+  const showLoadingState = status === STATUS.loading 
+  const showListOptions = !showLoadingState && !!data.length
+  const inputIsFilled = !!term.trim()
 
   function handleSelectOption(item: Item) {
     setTerm(item.name)
@@ -28,7 +33,7 @@ export default function Autocomplete({
   }
 
   function handleKeyPress(e: KeyboardEvent<HTMLInputElement>) {
-    if (e.code === 'Enter') {
+    if (e.code === 'Enter' && inputIsFilled) {
       onGetSelectedValue(term)
       setStatus(STATUS.idle)
       setData([])
@@ -57,22 +62,13 @@ export default function Autocomplete({
     timeoutRef.current = setTimeout(async () => {
       try {
         const result = await callData(currentTerm)
-        if (result.length) {
-          setStatus(STATUS.idle)
-        } else {
-          setStatus(STATUS.empty)
-        }
+        result.length ? setStatus(STATUS.idle) : setStatus(STATUS.empty)
         setData(result)
       } catch (error) {
         console.error(error)
       }
     }, debounceMs)
   }
-
-  const showEmptyState = status === STATUS.empty 
-  const showLoadingState = status === STATUS.loading 
-  const showListOptions = !showLoadingState && !!data.length
-  const inputIsFilled = !!term.trim()
 
   return (
     <div className="autocomplete-container">
@@ -84,7 +80,7 @@ export default function Autocomplete({
         onKeyDown={handleKeyPress}
       />
       {inputIsFilled && (
-        <button className='clear-btn' onClick={handleClear}>
+        <button aria-label='clear-text' className='clear-btn' onClick={handleClear}>
           ✖
         </button>
       )}
@@ -121,7 +117,7 @@ function EmptyStatus({ text }: Message) {
   )
 }
 
-function List({ data, onSelectItem, term }: ListProps) {
+function List({ term, data, onSelectItem }: ListProps) {
   function handleSelectOption(item: Item) {
     onSelectItem(item)
   }

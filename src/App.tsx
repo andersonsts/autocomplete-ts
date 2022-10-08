@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import Autocomplete from "./components/Autocomplete";
-import { callDataExample } from "./utils";
+import { callDataExample } from "./api";
 
 function App() {
   const [selectedOption, setSelectedOption] = useState('')

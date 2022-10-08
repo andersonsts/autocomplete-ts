@@ -1,4 +1,4 @@
-import { Item } from "../../types"
+import { Item } from "types"
 
 export type AutocompleteSearchProps = {
   callData: (term: string) => Promise<Item[]>,

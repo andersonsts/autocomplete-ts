@@ -1,5 +1,5 @@
-import { Item } from "../types"
-import { FAKE_RESPONSE_TIME_MS } from "../utils/contants"
+import { Item } from "types"
+import { FAKE_RESPONSE_TIME_MS } from "utils/contants"
 import DATA from './data.json'
 
 export const callDataExample = async (term: string): Promise<Item[]> => {

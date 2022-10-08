@@ -1,8 +1,8 @@
 import { useRef, useState, ChangeEvent, KeyboardEvent, Fragment } from 'react'
 
-import { Item } from '../../types'
-import { applyRegex } from '../../utils'
-import { MESSAGES, STATUS } from '../../utils/contants'
+import { applyRegex } from 'utils'
+import { MESSAGES, STATUS } from 'utils/contants'
+import { Item } from 'types'
 
 import { AutocompleteSearchProps, ListProps, Message, NameProps } from './types'
 import './styles.css'

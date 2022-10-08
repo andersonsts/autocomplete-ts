@@ -1,47 +1,30 @@
-import { useRef, useState, ChangeEvent, KeyboardEvent } from 'react'
+import { useRef, useState, ChangeEvent, KeyboardEvent, Fragment } from 'react'
 
+import { Item } from '../../types'
+import { applyRegex } from '../../utils'
+import { MESSAGES, STATUS } from '../../utils/contants'
+
+import { AutocompleteSearchProps, ListProps, Message, NameProps } from './types'
 import './styles.css'
-
-const STATUS = {
-  idle: 'idle',
-  loading: 'loading',
-  empty: 'empty'
-}
-
-type AutocompleteSearchProps = {
-  callData: (term: string) => Promise<string[]>,
-  debounceMs?: number
-  onGetSelectedValue: (selectedOption: string) => void,
-  placeholder?: string,
-  loadingMsg?: string,
-  emptyMsg?: string
-}
 
 export default function Autocomplete({ 
   callData,
   debounceMs = 500,
   onGetSelectedValue,
-  placeholder = 'Search...',
-  loadingMsg = 'Loading...',
-  emptyMsg = 'No results.'
+  placeholder = MESSAGES.placeholder,
+  loadingMsg = MESSAGES.loadingMsg,
+  emptyMsg = MESSAGES.emptyMsg
 }: AutocompleteSearchProps) {
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>()
   const [term, setTerm] = useState<string>('') 
-  const [data, setData] = useState<string[]>([])
+  const [data, setData] = useState<Item[]>([])
   const [status, setStatus] = useState<string>(STATUS.idle)
 
-  function handleReset() {
-    setTerm('')
+  function handleSelectOption(item: Item) {
+    setTerm(item.name)
     setData([])
     setStatus(STATUS.idle)
-    onGetSelectedValue('')
-  }
-
-  function handleSelectOption(item: string) {
-    setTerm(item)
-    setData([])
-    setStatus(STATUS.idle)
-    onGetSelectedValue(item)
+    onGetSelectedValue(item.name)
   }
 
   function handleKeyPress(e: KeyboardEvent<HTMLInputElement>) {
@@ -52,6 +35,13 @@ export default function Autocomplete({
     }
   }
 
+  function handleClear() {
+    setTerm('')
+    setData([])
+    setStatus(STATUS.idle)
+    onGetSelectedValue('')
+  }
+
   function handleChangeInputValue(e: ChangeEvent<HTMLInputElement>) {
     setStatus(STATUS.loading)
     setTerm(e.target.value)
@@ -60,20 +50,22 @@ export default function Autocomplete({
     timeoutRef.current && clearTimeout(timeoutRef.current);
 
     if (!currentTerm.trim()) {
-      handleReset()
+      handleClear()
       return;
     }
 
-    timeoutRef.current = setTimeout(() => {
-      callData(currentTerm)
-        .then(result => {
-          if (!result.length) {
-            setStatus(STATUS.empty)
-          } else {
-            setStatus(STATUS.idle)
-          }
-          setData(result)
-        })
+    timeoutRef.current = setTimeout(async () => {
+      try {
+        const result = await callData(currentTerm)
+        if (result.length) {
+          setStatus(STATUS.idle)
+        } else {
+          setStatus(STATUS.empty)
+        }
+        setData(result)
+      } catch (error) {
+        console.error(error)
+      }
     }, debounceMs)
   }
 
@@ -83,9 +75,7 @@ export default function Autocomplete({
   const inputIsFilled = !!term.trim()
 
   return (
-    <div 
-      className="autocomplete-container" 
-    >
+    <div className="autocomplete-container">
       <input 
         type="text" 
         placeholder={placeholder} 
@@ -94,15 +84,15 @@ export default function Autocomplete({
         onKeyDown={handleKeyPress}
       />
       {inputIsFilled && (
-        <button className='clear-btn' onClick={handleReset}>
+        <button className='clear-btn' onClick={handleClear}>
           ✖
         </button>
       )}
       <ul 
         className="list-options" 
       >
-        {showLoadingState && <LoadingStatus loadingMsg={loadingMsg} />}
-        {showEmptyState && <EmptyStatus emptyMsg={emptyMsg} />}
+        {showLoadingState && <LoadingStatus text={loadingMsg} />}
+        {showEmptyState && <EmptyStatus text={emptyMsg} />}
         {showListOptions && (
           <List
             data={data}
@@ -115,41 +105,38 @@ export default function Autocomplete({
   )
 }
 
-function LoadingStatus({ loadingMsg }: { loadingMsg: string }) {
+function LoadingStatus({ text }: Message) {
   return (
     <div className="loading-state">
-      {loadingMsg}
+      {text}
     </div>
   )
 }
 
-function EmptyStatus({ emptyMsg }: { emptyMsg: string }) {
+function EmptyStatus({ text }: Message) {
   return (
     <div className='empty-list'>
-      {emptyMsg}
+      {text}
     </div>
   )
-}
-
-type ListProps = {
-  data: string[]
-  onSelectItem: (item: string) => void
-  term: string;
 }
 
 function List({ data, onSelectItem, term }: ListProps) {
-  function handleSelectOption(item: string) {
+  function handleSelectOption(item: Item) {
     onSelectItem(item)
   }
 
   return (
     <>
       {data.map(item => (
-        <li key={item}>
+        <li key={item.id}>
           <button 
             onClick={() => handleSelectOption(item)}
           >
-            <Name name={item} highlight={term} />
+            <Name 
+              name={item.name} 
+              highlight={term} 
+            />
           </button>
         </li>
       ))}
@@ -157,30 +144,19 @@ function List({ data, onSelectItem, term }: ListProps) {
   )
 }
 
-type NameProps = {
-  name: string
-  highlight: string;
-}
-
 function Name({ name, highlight }: NameProps) {
   if (!highlight.trim()) return <span>{name}</span>;
+  
+  const regex = applyRegex(highlight) 
+  const splittedName = name.split(regex);
 
-  const escapeRegExp = (str = "") =>
-    str.replace(/([.?*+^$[\]\\(){}|-])/g, "\\$1");
-  const regex = new RegExp(`(${escapeRegExp(highlight)})`, "gi");
-  const parts = name.split(regex);
+  const getFormattedName = (letters: string[]) => {
+    return letters.map((letter: string, i) => 
+      <Fragment key={i}>
+        {regex.test(letter) ? <b>{letter}</b> : letter}
+      </Fragment>
+    )
+  }
 
-  return (
-    <span>
-      {parts
-        .filter((part: string) => part)
-        .map((part: string, i) =>
-          regex.test(part) ? (
-            <b key={i}>{part}</b>
-          ) : (
-            <span key={i}>{part}</span>
-          )
-        )}
-    </span>
-  );
+  return <>{getFormattedName(splittedName)}</>
 };
